@@ -76,12 +76,16 @@ class Network(object):
         gradient descent using backpropagation to a single mini batch.
         The ``mini_batch`` is a list of tuples ``(x, y)``, and ``eta``
         is the learning rate."""
-        nabla_b = [np.zeros(b.shape) for b in self.biases]
-        nabla_w = [np.zeros(w.shape) for w in self.weights]
-        for x, y in mini_batch:
-            delta_nabla_b, delta_nabla_w = self.backprop(x, y)
-            nabla_b = [nb+dnb for nb, dnb in zip(nabla_b, delta_nabla_b)]
-            nabla_w = [nw+dnw for nw, dnw in zip(nabla_w, delta_nabla_w)]
+        # nabla_b = [np.zeros(b.shape) for b in self.biases]
+        # nabla_w = [np.zeros(w.shape) for w in self.weights]
+        # for x, y in mini_batch:
+        #     delta_nabla_b, delta_nabla_w = self.backprop(x, y)
+        #     nabla_b = [nb+dnb for nb, dnb in zip(nabla_b, delta_nabla_b)]
+        #     nabla_w = [nw+dnw for nw, dnw in zip(nabla_w, delta_nabla_w)]
+
+        xs = np.array(map(lambda x: x[0], mini_batch)).reshape((len(mini_batch), -1)).transpose()                                                            
+        ys = np.array(map(lambda x: x[1], mini_batch)).reshape((len(mini_batch), -1)).transpose()
+        nabla_b, nabla_w = self.backprop(xs, ys)
 
         self.weights = [w-(eta/len(mini_batch))*nw
                         for w, nw in zip(self.weights, nabla_w)]
@@ -95,6 +99,7 @@ class Network(object):
         to ``self.biases`` and ``self.weights``."""
         nabla_b = [np.zeros(b.shape) for b in self.biases]
         nabla_w = [np.zeros(w.shape) for w in self.weights]
+        batch_number = x.shape[-1]
         # feedforward
         activation = x
         activations = [x] # list to store all the activations, layer by layer
@@ -107,7 +112,7 @@ class Network(object):
         # backward pass
         delta = self.cost_derivative(activations[-1], y) * \
             sigmoid_prime(zs[-1])
-        nabla_b[-1] = delta
+        nabla_b[-1] = np.dot(delta, np.ones((batch_number, 1)))
         nabla_w[-1] = np.dot(delta, activations[-2].transpose())
         # Note that the variable l in the loop below is used a little
         # differently to the notation in Chapter 2 of the book.  Here,
@@ -119,7 +124,7 @@ class Network(object):
             z = zs[-l]
             sp = sigmoid_prime(z)
             delta = np.dot(self.weights[-l+1].transpose(), delta) * sp
-            nabla_b[-l] = delta
+            nabla_b[-l] = np.dot(delta, np.ones((batch_number, 1)))
             nabla_w[-l] = np.dot(delta, activations[-l-1].transpose())
         return (nabla_b, nabla_w)
 
