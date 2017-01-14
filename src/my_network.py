@@ -36,6 +36,8 @@ class Network(object):
         self.biases = [np.random.randn(y, 1) for y in sizes[1:]]
         self.weights = [np.random.randn(y, x)
                         for x, y in zip(sizes[:-1], sizes[1:])]
+        self.velocities = [np.zeros((y, x))
+                           for x, y in zip(sizes[:-1], sizes[1:])]
 
     def feedforward(self, a):
         """Return the output of the network if ``a`` is input."""
@@ -86,9 +88,14 @@ class Network(object):
         xs = np.array(map(lambda x: x[0], mini_batch)).reshape((len(mini_batch), -1)).transpose()                                                            
         ys = np.array(map(lambda x: x[1], mini_batch)).reshape((len(mini_batch), -1)).transpose()
         nabla_b, nabla_w = self.backprop(xs, ys)
+        # # note(yan): momentum. ratio = 0.8
+        self.velocities = [0.2 * u - (eta / len(mini_batch)) * nw
+                           for u, nw in zip(self.velocities, nabla_w)]
+        self.weights = [w + v
+                        for w, v in zip(self.weights, self.velocities)]
 
-        self.weights = [w-(eta/len(mini_batch))*nw
-                        for w, nw in zip(self.weights, nabla_w)]
+        # self.weights = [w-(eta/len(mini_batch))*nw
+        #                 for w, nw in zip(self.weights, nabla_w)]
         self.biases = [b-(eta/len(mini_batch))*nb
                        for b, nb in zip(self.biases, nabla_b)]
 
